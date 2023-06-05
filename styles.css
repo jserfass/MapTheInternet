@@ -1,0 +1,122 @@
+body {
+   font-family: Helvetica Neue, Arial, sans-serif;
+	margin: auto;
+   padding:10px;
+   max-width: 95%;
+   border:0;
+   vertical-align: baseline;
+}
+
+   body {background-image: url('pictures/background2.png');
+   background-repeat: no-repeat;
+   background-attachment: fixed;
+   background-size: cover;
+}
+
+div#references {
+  width: 100%;
+}
+
+#map {
+   position: relative;
+   width: 95%;
+   top: 0;
+   bottom: 0;   
+   }
+  
+   #menu {
+      background: black;
+      position: absolute; 
+      top: 1.5%;
+      left: 1%;
+      z-index: 1;
+      border-radius: 3px;
+      width: fit-content;
+      border: 1px solid rgb(246, 250, 4);
+      font-family: 'Open Sans', sans-serif;
+      }
+      
+      #menu a {
+      font-size: 13px;
+      color: #404040;
+      display: block;
+      margin: 0;
+      padding: 0;
+      padding: 10px;
+      text-decoration: none;
+      border-bottom: 1px solid rgb(246, 250, 4);
+      text-align: center;
+      }
+      
+      #menu a:last-child {
+      border: none;
+      }
+      
+      #menu a:hover {
+      background-color: black;
+      color: #404040;
+      }
+      
+      #menu a.active {
+      background-color: #3887be;
+      color: #ffffff;
+      }
+      
+      #menu a.active:hover {
+      background: #3074a4;
+      }
+
+   h1 {
+      font-family: Helvetica Neue, Arial, sans-serif;
+      color: whitesmoke;
+      font-size: 80px;
+      text-shadow: 6px 6px 15px rgb(246, 250, 4);
+      font-weight: bold;
+      text-align: center;
+   }
+   h2 {
+      font-family: Helvetica Neue, Arial, sans-serif;
+      color: whitesmoke;
+      font-size: 40px;
+      text-shadow: 3px 3px 8px rgb(246, 250, 4);
+      font-weight: bold;
+      text-align: center;
+      align-content: center;
+   }
+   p1 {
+      font-family: Helvetica Neue, Arial, sans-serif;
+		color: white;
+		font-size: 17px;
+		font-weight: bold;
+		text-align: center;
+      margin-inline: 1;			
+						}
+
+   p2 {
+      font-family: Helvetica Neue, Arial, sans-serif;
+		color: whitesmoke;
+		font-size: 17px;
+		text-shadow: 2px 2px 5px white;
+		font-weight: bold;
+		text-align: center;
+      margin-inline: 1;				
+						}               
+
+   div#references{
+      background-color: black;
+      color: whitesmoke;
+      border: 1px solid rgb(246, 250, 4);
+      padding-bottom: 10px;
+      padding-top: 10px;
+      opacity: .9;
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      height:fit-content
+                   }
+                   
+      a:link{
+      color: rgb(3, 104, 138);
+      }
+
+            

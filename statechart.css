@@ -1,0 +1,42 @@
+body {
+  font-family: Helvetica Neue, Arial, sans-serif;
+  text-align: center;
+  background: #fff;
+}
+
+nav{
+  display: flex;
+}
+nav a{
+  text-decoration: none;
+  margin: 0 30px;
+}
+
+.wrapper {
+  max-width: 800px;
+  margin: 50px auto;
+}
+
+h1 {
+  font-weight: 200;
+  font-size: 3em;
+  margin: 0 0 0.1em 0;
+  color:#0066ff;
+}
+
+h2 {
+  font-weight: 200;
+  font-size: 1.2em;
+  margin: 0 0 50px;
+  color: #0066ff;
+}
+
+a {
+  margin-top: 50px;
+  display: block;
+  color: #3e95cd;
+}
+
+canvas {
+  margin-bottom: 20px;
+}
