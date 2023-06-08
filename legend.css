@@ -6,10 +6,9 @@
   padding: 5px;
   z-index: 1;
   width: 400px;
-  
   position: absolute;
   bottom:6%;
-  left: 76.5%;
+  left: 75%;
     /* other styles */
   columns: 2;
   column-gap: 10px; /* Adjust the gap between columns as desired */
@@ -32,6 +31,8 @@
     list-style-type: none;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
   }
   
   .rivers {
