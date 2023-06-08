@@ -1,16 +1,16 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoianNlcmZhc3MiLCJhIjoiY2w5eXA5dG5zMDZydDN2cG1zeXduNDF5eiJ9.6-9p8CxqQlWrUIl8gSjmNw'
 const map = new mapboxgl.Map({
 container: 'map', // container ID
-style: 'mapbox://styles/mapbox/dark-v11', // style URL
-center: [-95.7129, 37.0902], // starting position [lng, lat]
-zoom: 3.5, // starting zoom
+style: 'mapbox://styles/mapbox/navigation-night-v1', // style URL
+center: [0, 0], // starting position [lng, lat]
+zoom: 1.75, // starting zoom
 pitch: 0,
 //bearing: 80,
 attributionControl: false,
-//maxBounds: [
-    //[-171.791110603, 18.91619], // Southwest coordinates
-    //[-66.96466, 71.3577635769] // Northeast coordinates
-  //],//
+maxBounds: [
+  [-180, -85], // Southwest coordinates
+  [180, 85] // Northeast coordinates
+  ],
 });
 //listener => replaces function
 map.on('load', () => {
@@ -27,24 +27,35 @@ map.on('load', () => {
       'circle-radius': [
         'interpolate',
         ['linear'],
-        ['get', 'SqFt'],
-        0, 4,
-        100000, 5,
-        500000, 10,
-        1000000, 15,
-        2000000, 20,
-        5000000, 25
+        ['get', 'Data_Generated_Per_Day__TB_'],
+        0, 8,
+        100, 10,
+        400, 20,
+        800, 30,
+        1536, 40,
+        2560, 50
       ],
-      'circle-color': '#39FF14',  
+      'circle-color': [
+        'interpolate',
+        ['linear'],
+        ['get', 'Data_Generated_Per_Day__TB_'],
+        0, 'blue',
+        100, 'green',
+        400, 'yellow',
+        800, 'orange',
+        1536, 'red',
+        2560, 'purple'
+      ],
       'circle-blur': 0.5,
       'circle-opacity': 0.8,
-      'circle-stroke-width': .5,
+      'circle-stroke-width': 0.5,
       'circle-stroke-color': 'yellow'
     },
     'layout': {
       'visibility': 'visible'
     }
-  });  
+  });
+  
   
 // Add a source for the rivers feature class.
 map.addSource('rivers', {
