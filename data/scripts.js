@@ -2,8 +2,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoianNlcmZhc3MiLCJhIjoiY2w5eXA5dG5zMDZydDN2cG1ze
 const map = new mapboxgl.Map({
 container: 'map', // container ID
 style: 'mapbox://styles/mapbox/navigation-night-v1', // style URL
-center: [-98.5855, 39.8333], // starting position [lng, lat]
-zoom: 1.75, // starting zoom
+center: [-98.35, 39.50], // starting position [lng, lat]
+zoom: 4, // starting zoom
 pitch: 0,
 //bearing: 80,
 attributionControl: false,
@@ -55,34 +55,6 @@ map.on('load', () => {
       'visibility': 'visible'
     }
   });
-  
-  
-// Add a source for the rivers feature class.
-map.addSource('rivers', {
-    type: 'geojson',
-    data: 'data/Rivers.geojson' 
-  });
-  
-  map.addLayer({
-    'id': 'Major Rivers',
-    'type': 'line',
-    'source': 'rivers',
-    'layout': {
-      'visibility': 'visible'
-    },
-    'paint': {
-      'line-width': [
-        'case',
-        ['>', ['get', 'miles'], 500], 2, // rivers longer than 500 miles get a width of 2
-        ['>', ['get', 'miles'], 750], 3, // rivers longer than 750 miles get a width of 3
-        ['>', ['get', 'miles'], 1000], 4, // rivers longer than 1000 miles get a width of 4
-        ['>', ['get', 'miles'], 1500], 5, // rivers longer than 1500 miles get a width of 5
-        1 // default width for shorter rivers
-      ],
-      'line-color': '#2F80ED', // water blue color
-      'line-opacity': 0.8
-    }
-  });
 
 // Add a source for the data feature class.
 map.addSource('data', {
@@ -98,12 +70,63 @@ map.addLayer({
       'visibility': 'none'
     },
     'paint': {
-      'line-width': 6.5,
+      'line-width': 5.5,
       'line-color': 'yellow',
       'line-opacity': 0.8
     },
     'minzoom': 1,
     'maxzoom': 4,
+});
+
+map.addSource('Center', {
+  type: 'geojson',
+  data: 'data/ContinentCenter.geojson'
+});
+map.addLayer({
+  id: 'End Point',
+  type: 'circle',
+  source: 'Center',
+  paint: {
+      'circle-radius': [
+          'interpolate',
+          ['linear'],
+          ['get', 'SqFt'],
+          0, 4,
+          100000, 5,
+          500000, 10,
+          1000000, 15,
+          2000000, 20,
+          5000000, 25
+      ],
+      'circle-color': '#39FF14',  
+      'circle-blur': 0.5,
+      'circle-opacity': 0.8,
+      'circle-stroke-width': .5,
+      'circle-stroke-color': 'yellow'
+  },
+  layout: {
+      visibility: 'visible'
+  }
+});
+// Map and layer setup...
+// ...
+
+// Set up legend
+var legendData = [
+  { value: '0-100 TB', color: 'blue' },
+  { value: '101-400 TB', color: 'green' },
+  { value: '401-800 TB', color: 'yellow' },
+  { value: '801-1536 TB', color: 'orange' },
+  { value: '1537-2560 TB', color: 'red' },
+  { value: '2561+ TB', color: 'purple' }
+];
+
+var legend = document.getElementById('legend');
+
+legendData.forEach((item) => {
+  var legendItem = document.createElement('div');
+  legendItem.innerHTML = '<div style="background-color: ' + item.color + '; width: 15px; height: 15px; display: inline-block; margin-right: 5px;"></div>' + item.value;
+  legend.appendChild(legendItem);
 });
 
     // Adding a control to let the user adjust their view
@@ -136,12 +159,12 @@ map.addLayer({
 // After the last frame rendered before the map enters an "idle" state.
 map.on('idle', () => {    
   // If these two layers were not added to the map, abort
-  if (!map.getLayer('US Data Centers') || !map.getLayer('Major Rivers') || !map.getLayer('Data Travel')) {
+  if (!map.getLayer('US Data Centers') || !map.getLayer('End Point') || !map.getLayer('Data Travel')) {
     return;
   }
 
   // Enumerate ids of the layers.
-  const toggleableLayerIds = ['US Data Centers', 'Major Rivers', 'Data Travel'];
+  const toggleableLayerIds = ['US Data Centers', 'End Point', 'Data Travel'];
 
   // Set up the corresponding toggle button for each layer.
   for (const id of toggleableLayerIds) {
@@ -187,48 +210,18 @@ map.on('idle', () => {
 });
 
 
-// When a click event occurs on a feature in the trails layer, open a popup at the
-// location of the feature, with description HTML from its properties.
-map.on('click', 'Major Rivers', (e) => {
-    const length = e.features[0].properties.MILES.toFixed(1);
-    let description = "<b>River Name: </b>" + e.features[0].properties.NAME + "<br>";
-    if (length > 2414.06 * 0.621371) {
-        description += "<b>River Length (Miles): </b>" + length + "<br>";
-        description += "<b>Category: </b>Great River<br>";
-    } else if (length > 1609.34 * 0.621371) {
-        description += "<b>River Length (Miles): </b>" + length + "<br>";
-        description += "<b>Category: </b>Major River<br>";
-    } else if (length > 1207.01 * 0.621371) {
-        description += "<b>River Length (Miles): </b>" + length + "<br>";
-        description += "<b>Category: </b>Medium River<br>";
-    } else if (length > 804.672 * 0.621371) {
-        description += "<b>River Length (Miles): </b>" + length + "<br>";
-        description += "<b>Category: </b>Small River<br>";
-    } else {
-        description += "<b>River Length (Miles): </b>" + length + "<br>";
-        description += "<b>Category: </b>Tiny River<br>";
-    }
-    new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(description)
-        .addTo(map);
-});
-    // Change the cursor to a pointer when the mouse is over the trails layer.
-    map.on('mouseenter', 'Major Rivers', () => {
-    map.getCanvas().style.cursor = 'pointer';
-    });
-     
-    // Change it back to a pointer when it leaves.
-    map.on('mouseleave', 'Major Rivers', () => {
-    map.getCanvas().style.cursor = '';
-    });
+map.on('click', 'US Data Centers', (e) => {
+  new mapboxgl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML("<b>Center Name: </b>" + e.features[0].properties.Company + "<br><b>Location: </b>" + e.features[0].properties.Data_Center_Location + 
+      "<br><b>Data Generated Daily (tb): </b>" + e.features[0].properties.Data_Generated_Per_Day__TB_ + "<br><b>Equivalent Data Amount in DVDs: </b>" + e.features[0].properties.Data_Equivalent__DVDs_ + "<br><b>Continents Served: </b>" + e.features[0].properties.Continents_served)
+      .addTo(map);
 
-    map.on('click', 'US Data Centers', (e) => {
-      new mapboxgl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML("<b>Center Name: </b>" + e.features[0].properties.Company + "<br><b>Location: </b>" + e.features[0].properties.Data_Center_Location + 
-          "<br><b>Data Generated Daily (tb): </b>" + e.features[0].properties.Data_Generated_Per_Day__TB_ + "<br><b>Equivalent Data Amount in DVDs: </b>" + e.features[0].properties.Data_Equivalent__DVDs_ + "<br><b>Continents Served: </b>" + e.features[0].properties.Continents_served)
-          .addTo(map);},);
+  map.flyTo({
+      center: [0, 20], // Center coordinates for showing all continents
+      zoom: 1.25 // Adjust zoom level as needed
+  });
+});
 
     map.on('click', function(e) {
       var features = map.queryRenderedFeatures(e.point, { layers: ['US Data Centers'] });
@@ -259,13 +252,13 @@ map.on('click', 'Major Rivers', (e) => {
         var features = map.queryRenderedFeatures(e.point, { layers: ['US Data Centers'] });
       
         if (!features.length) {
-          ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'].forEach(function (id) {
+          ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'End Point', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'].forEach(function (id) {
             if (map.getLayer(id)) {
               map.removeLayer(id);
             }
           });
       
-          ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'].forEach(function (id) {
+          ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'End Point','Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'].forEach(function (id) {
             if (map.getSource(id)) {
               map.removeSource(id);
             }
@@ -274,7 +267,7 @@ map.on('click', 'Major Rivers', (e) => {
           return;
         }
       
-        var travelLayers = ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'];
+        var travelLayers = ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'End Point', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'];
       
         var bounds = new mapboxgl.LngLatBounds();
       
@@ -447,7 +440,7 @@ map.on('click', 'Major Rivers', (e) => {
               data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-              id: 'Center',
+              id: 'End Point',
               type: 'circle',
               source: 'Center',
               paint: {
@@ -473,18 +466,19 @@ map.on('click', 'Major Rivers', (e) => {
               }
           });
           map.addLayer({
-              id: 'Continent-label',
-              type: 'symbol',
-              source: 'Center',
-              layout: {
-                  'text-field': ['get', 'Continent'],
-                  'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                  'text-offset': [0, 1.25],
-                  'text-anchor': 'top'
-              },
-              paint: {
-                  'text-color': '#ffffff'
-              }
+            id: 'Continent-label',
+            type: 'symbol',
+            source: 'End Point',
+            layout: {
+                'text-field': ['get', 'Continent'],
+                'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
+            },
+            paint: {
+                'text-color': 'yellow'
+            }
           });
       }  
       else if (feature.properties.Location === 'Maiden, North Carolina') {
@@ -537,7 +531,7 @@ map.on('click', 'Major Rivers', (e) => {
           data: 'data/ContinentCenter.geojson'
         });
         map.addLayer({
-          id: 'Center',
+          id: 'End Point',
           type: 'circle',
           source: 'Center',
           paint: {
@@ -565,15 +559,16 @@ map.on('click', 'Major Rivers', (e) => {
         map.addLayer({
           id: 'Continent-label',
           type: 'symbol',
-          source: 'Center',
+          source: 'End Point',
           layout: {
               'text-field': ['get', 'Continent'],
               'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-              'text-offset': [0, 1.25],
-              'text-anchor': 'top'
+              'text-offset': [0, 1],
+              'text-anchor': 'top',
+              'text-size': 30,
           },
           paint: {
-              'text-color': '#ffffff'
+              'text-color': 'yellow'
           }
         });
       }
@@ -627,7 +622,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -655,15 +650,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -717,7 +713,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -745,15 +741,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -802,7 +799,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -830,15 +827,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -887,7 +885,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -915,15 +913,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -977,7 +976,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1005,15 +1004,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -1067,7 +1067,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1095,15 +1095,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -1157,7 +1158,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1185,15 +1186,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -1247,7 +1249,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1275,15 +1277,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -1337,7 +1340,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1365,15 +1368,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -1427,7 +1431,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1455,17 +1459,18 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
-          });    
+          });   
         }
         else if (feature.properties.Location === 'Ashburn, Virginia') {
           map.addSource('Ashburn Travel', {
@@ -1517,7 +1522,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1545,17 +1550,18 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
-          });    
+          });   
         }
         else if (feature.properties.Location === 'East Fishkill, New York') {
           map.addSource('Fishkill Travel', {
@@ -1607,7 +1613,7 @@ map.on('click', 'Major Rivers', (e) => {
             data: 'data/ContinentCenter.geojson'
           });
           map.addLayer({
-            id: 'Center',
+            id: 'End Point',
             type: 'circle',
             source: 'Center',
             paint: {
@@ -1635,15 +1641,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
@@ -1725,15 +1732,16 @@ map.on('click', 'Major Rivers', (e) => {
           map.addLayer({
             id: 'Continent-label',
             type: 'symbol',
-            source: 'Center',
+            source: 'End Point',
             layout: {
                 'text-field': ['get', 'Continent'],
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                'text-offset': [0, 1.25],
-                'text-anchor': 'top'
+                'text-offset': [0, 1],
+                'text-anchor': 'top',
+                'text-size': 30,
             },
             paint: {
-                'text-color': '#ffffff'
+                'text-color': 'yellow'
             }
           });    
         }
