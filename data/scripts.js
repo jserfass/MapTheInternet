@@ -2,7 +2,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoianNlcmZhc3MiLCJhIjoiY2w5eXA5dG5zMDZydDN2cG1ze
 const map = new mapboxgl.Map({
 container: 'map', // container ID
 style: 'mapbox://styles/mapbox/navigation-night-v1', // style URL
-center: [0, 0], // starting position [lng, lat]
+center: [-98.5855, 39.8333], // starting position [lng, lat]
 zoom: 1.75, // starting zoom
 pitch: 0,
 //bearing: 80,
@@ -95,7 +95,7 @@ map.addLayer({
     'type': 'line',
     'source': 'data',
     'layout': {
-      'visibility': 'visible'
+      'visibility': 'none'
     },
     'paint': {
       'line-width': 6.5,
@@ -136,57 +136,56 @@ map.addLayer({
 // After the last frame rendered before the map enters an "idle" state.
 map.on('idle', () => {    
   // If these two layers were not added to the map, abort
-  if (!map.getLayer('US Data Centers') || !map.getLayer('Major Rivers')|| !map.getLayer('Data Travel')) {
-  return;
+  if (!map.getLayer('US Data Centers') || !map.getLayer('Major Rivers') || !map.getLayer('Data Travel')) {
+    return;
   }
 
-
   // Enumerate ids of the layers.
-  const toggleableLayerIds = ['US Data Centers', 'Major Rivers', 'Data Travel',];
+  const toggleableLayerIds = ['US Data Centers', 'Major Rivers', 'Data Travel'];
 
   // Set up the corresponding toggle button for each layer.
   for (const id of toggleableLayerIds) {
-      // Skip layers that already have a button set up.
-      if (document.getElementById(id)) {
-          continue;
-      }
+    // Skip layers that already have a button set up.
+    if (document.getElementById(id)) {
+      continue;
+    }
+
+    // Create a link.
+    const link = document.createElement('a');
+    link.id = id;
+    link.href = '#';
+    link.textContent = id;
+    
+    // Show or hide layer when the toggle is clicked.
+    link.onclick = function (e) {
+      const clickedLayer = this.textContent;
+      e.preventDefault();
+      e.stopPropagation();
   
-      // Create a link.
-      const link = document.createElement('a');
-      link.id = id;
-      link.href = '#';
-      link.textContent = id;
-      link.className = 'active';
-      
-      // Show or hide layer when the toggle is clicked.
-      link.onclick = function (e) {
-          const clickedLayer = this.textContent;
-          e.preventDefault();
-          e.stopPropagation();
-      
-          const visibility = map.getLayoutProperty(
-              clickedLayer,
-              'visibility'
-      );
-      
+      const visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+  
       // Toggle layer visibility by changing the layout object's visibility property.
       if (visibility === 'visible') {
-          map.setLayoutProperty(clickedLayer, 'visibility', 'none');
-          this.className = '';
+        map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+        this.classList.remove('active'); // Remove the 'active' class
       } else {
-          this.className = 'active';
-          map.setLayoutProperty(
-              clickedLayer,
-              'visibility',
-              'visible'
-          );
+        this.classList.add('active'); // Add the 'active' class
+        map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
       }
-      };    
-      
-          const layers = document.getElementById('menu');
-          layers.appendChild(link);
-      }
-});    
+    };
+  
+    const layers = document.getElementById('menu');
+    layers.appendChild(link);
+  
+    // Set the initial active state of the buttons based on the layer ID
+    if (id === 'Data Travel') {
+      link.classList.remove('active'); // Remove the 'active' class
+    } else {
+      link.classList.add('active'); // Add the 'active' class
+    }
+  }
+});
+
 
 // When a click event occurs on a feature in the trails layer, open a popup at the
 // location of the feature, with description HTML from its properties.
@@ -250,6 +249,49 @@ map.on('click', 'Major Rivers', (e) => {
           return;
       }
     
+      map.on('click', 'US Data Centers', (e) => {
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML("<b>Center Name: </b>" + e.features[0].properties.Company + "<br><b>Location: </b>" + e.features[0].properties.Data_Center_Location + 
+          "<br><b>Data Generated Daily (tb): </b>" + e.features[0].properties.Data_Generated_Per_Day__TB_ + "<br><b>Equivalent Data Amount in DVDs: </b>" + e.features[0].properties.Data_Equivalent__DVDs_ + "<br><b>Continents Served: </b>" + e.features[0].properties.Continents_served)
+          .addTo(map);
+      
+        var features = map.queryRenderedFeatures(e.point, { layers: ['US Data Centers'] });
+      
+        if (!features.length) {
+          ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'].forEach(function (id) {
+            if (map.getLayer(id)) {
+              map.removeLayer(id);
+            }
+          });
+      
+          ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'].forEach(function (id) {
+            if (map.getSource(id)) {
+              map.removeSource(id);
+            }
+          });
+      
+          return;
+        }
+      
+        var travelLayers = ['Douglas Travel', 'Continents', 'Center', 'Continent-label', 'Maiden Travel', 'Altoona Travel', 'Ashburn Travel', 'Atlanta Travel', 'Chicago Travel', 'Council Travel', 'Dallas Travel', 'Douglas Travel', 'Dublin Travel', 'Fishkill Travel', 'Phoenix Travel', 'Portland Travel', 'Round Travel', 'San Jose Travel', 'Quincy Travel', 'Four'];
+      
+        var bounds = new mapboxgl.LngLatBounds();
+      
+        travelLayers.forEach(function (layer) {
+          var features = map.queryRenderedFeatures(e.point, { layers: [layer] });
+          features.forEach(function (feature) {
+            var geom = feature.geometry;
+            bounds.extend(geom.coordinates);
+          });
+        });
+      
+        map.fitBounds(bounds, {
+          padding: 50
+        });
+      });
+                
+      
       var feature = features[0];
   
       if (feature.properties.Location === 'Douglas County, Georgia') {
